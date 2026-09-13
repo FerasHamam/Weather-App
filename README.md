@@ -51,7 +51,5 @@ The API returns user-safe JSON errors with status codes for invalid input (`400`
 
 ## Improvements with more time
 
-1. Add a shared durable cache and recent-search store for multi-instance deployments.
-2. Add end-to-end browser coverage for the search flow and responsive layouts.
-3. Add dark mode and optional browser geolocation after the core path remains stable.
-4. Add request observability, rate limiting, and a more complete location selector for duplicate city names.
+1. Improve city alias handling so searches such as `NYC` and `New York City` resolve to the same canonical city and share the same cache entry. Currently, they may produce the same weather output but are cached separately.
+2. Spend more time detailing and refining the frontend to improve the overall user experience.

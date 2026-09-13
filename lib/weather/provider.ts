@@ -160,9 +160,20 @@ function mapForecast(payload: ForecastPayload): DailyForecast[] {
 
   for (const entry of payload.list) {
     const date = entry.dt_txt.slice(0, 10);
-    if (byDate.has(date)) {
+    const existingForecast = byDate.get(date);
+
+    if (existingForecast) {
+      existingForecast.minTemperatureCelsius = Math.min(
+        existingForecast.minTemperatureCelsius,
+        entry.main.temp_min,
+      );
+      existingForecast.maxTemperatureCelsius = Math.max(
+        existingForecast.maxTemperatureCelsius,
+        entry.main.temp_max,
+      );
       continue;
     }
+
     byDate.set(date, {
       date,
       temperatureCelsius: entry.main.temp,

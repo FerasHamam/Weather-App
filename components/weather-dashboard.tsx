@@ -84,7 +84,6 @@ export function WeatherDashboard() {
           ? requestError.message
           : "Weather data is unavailable.",
       );
-      setWeather(null);
     } finally {
       setIsLoading(false);
     }

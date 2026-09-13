@@ -1,6 +1,7 @@
 import type { CurrentWeather, DailyForecast, WeatherResponse } from "./types";
 
-const API_BASE_URL = "https://api.openweathermap.org";
+const API_BASE_URL =
+  process.env.OPENWEATHER_API_BASE_URL ?? "https://api.openweathermap.org";
 
 type ProviderErrorCode =
   | "invalid-city"
@@ -182,6 +183,8 @@ export async function fetchWeather(city: string): Promise<WeatherResponse> {
   geocodeUrl.searchParams.set("appid", apiKey);
 
   const geocodePayload = await fetchProvider(geocodeUrl);
+
+  // OpenWeatherMap Returns an Array by Design [{...}]
   if (!Array.isArray(geocodePayload) || !isCoordinates(geocodePayload[0])) {
     throw new WeatherProviderError(
       "invalid-city",

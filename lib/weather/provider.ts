@@ -40,6 +40,7 @@ type ForecastPayload = {
   list: Array<{
     dt_txt: string;
     main: { temp: number; temp_min: number; temp_max: number };
+    weather: Array<{ description: string; icon: string }>;
   }>;
 };
 
@@ -83,7 +84,12 @@ function isForecastPayload(value: unknown): value is ForecastPayload {
         isRecord(item.main) &&
         typeof item.main.temp === "number" &&
         typeof item.main.temp_min === "number" &&
-        typeof item.main.temp_max === "number",
+        typeof item.main.temp_max === "number" &&
+        Array.isArray(item.weather) &&
+        item.weather.length > 0 &&
+        isRecord(item.weather[0]) &&
+        typeof item.weather[0].description === "string" &&
+        typeof item.weather[0].icon === "string",
     )
   );
 }
@@ -149,11 +155,16 @@ function getApiKey(): string {
   return apiKey;
 }
 
+const MIDDAY_HOUR = 12;
+
 function mapForecast(payload: ForecastPayload): DailyForecast[] {
   const byDate = new Map<string, DailyForecast>();
+  const middayDistanceByDate = new Map<string, number>();
 
   for (const entry of payload.list) {
     const date = entry.dt_txt.slice(0, 10);
+    const hour = Number(entry.dt_txt.slice(11, 13));
+    const middayDistance = Math.abs(hour - MIDDAY_HOUR);
     const existingForecast = byDate.get(date);
 
     if (existingForecast) {
@@ -165,6 +176,13 @@ function mapForecast(payload: ForecastPayload): DailyForecast[] {
         existingForecast.maxTemperatureCelsius,
         entry.main.temp_max,
       );
+
+      const existingMiddayDistance = middayDistanceByDate.get(date) ?? Infinity;
+      if (middayDistance < existingMiddayDistance) {
+        existingForecast.description = entry.weather[0].description;
+        existingForecast.iconCode = entry.weather[0].icon;
+        middayDistanceByDate.set(date, middayDistance);
+      }
       continue;
     }
 
@@ -173,7 +191,10 @@ function mapForecast(payload: ForecastPayload): DailyForecast[] {
       temperatureCelsius: entry.main.temp,
       minTemperatureCelsius: entry.main.temp_min,
       maxTemperatureCelsius: entry.main.temp_max,
+      description: entry.weather[0].description,
+      iconCode: entry.weather[0].icon,
     });
+    middayDistanceByDate.set(date, middayDistance);
   }
 
   return [...byDate.values()].slice(0, 5);

@@ -15,6 +15,8 @@ export interface DailyForecast {
   temperatureCelsius: number;
   minTemperatureCelsius: number;
   maxTemperatureCelsius: number;
+  description: string;
+  iconCode: string;
 }
 
 export interface WeatherResponse {

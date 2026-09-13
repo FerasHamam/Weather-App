@@ -49,7 +49,9 @@ The cache and recent-search store are intentionally lightweight for the assessme
 
 The API returns user-safe JSON errors with status codes for invalid input (`400`), unknown cities (`404`), provider rate limits (`429`), network failures (`503`), and upstream failures (`502`). The UI presents these errors without exposing provider internals.
 
-## Improvements with more time
+## Improvements if I had more time
 
 1. Improve city alias handling so searches such as `NYC` and `New York City` resolve to the same canonical city and share the same cache entry. Currently, they may produce the same weather output but are cached separately.
 2. Spend more time detailing and refining the frontend to improve the overall user experience.
+3. I would use AI to summarize the forecast for each day because the API provides multiple weather descriptions across different timelines.
+4. Investigate a reliable way to integrate Bun SQLite with Next.js, since the initial implementation caused build and runtime failures(had not enough time to waste on figuring it out).

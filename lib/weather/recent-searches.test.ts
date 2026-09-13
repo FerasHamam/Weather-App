@@ -15,11 +15,19 @@ describe("recent searches", () => {
     recordRecentSearch(sessionId, { city: " berlin " });
 
     expect(listRecentSearches(sessionId).map((search) => search.city)).toEqual([
-      "berlin",
+      "Berlin",
       "Oslo",
       "Lima",
       "Tokyo",
       "Paris",
     ]);
+  });
+
+  test("capitalizes only the first letter of a saved city", () => {
+    const sessionId = "formatting-session";
+    clearRecentSearches(sessionId);
+    recordRecentSearch(sessionId, { city: "  LISBON  " });
+
+    expect(listRecentSearches(sessionId)[0]?.city).toBe("Lisbon");
   });
 });

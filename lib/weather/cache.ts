@@ -1,4 +1,5 @@
 import type { WeatherResponse } from "./types";
+import { normalizeCity } from "./helpers";
 
 export const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
 
@@ -9,11 +10,10 @@ type CacheEntry = {
 
 const cache = new Map<string, CacheEntry>();
 
-export function normalizeCity(city: string): string {
-  return city.trim().replace(/\s+/g, " ");
-}
-
-export function getCachedWeather(city: string, now = Date.now()): WeatherResponse | null {
+export function getCachedWeather(
+  city: string,
+  now = Date.now(),
+): WeatherResponse | null {
   const key = normalizeCity(city).toLowerCase();
   const entry = cache.get(key);
 
@@ -29,7 +29,11 @@ export function getCachedWeather(city: string, now = Date.now()): WeatherRespons
   return { ...entry.value, cached: true };
 }
 
-export function setCachedWeather(city: string, value: WeatherResponse, now = Date.now()): void {
+export function setCachedWeather(
+  city: string,
+  value: WeatherResponse,
+  now = Date.now(),
+): void {
   cache.set(normalizeCity(city).toLowerCase(), {
     value: { ...value, cached: false },
     expiresAt: now + WEATHER_CACHE_TTL_MS,

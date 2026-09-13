@@ -1,5 +1,6 @@
 export interface CurrentWeather {
   city: string;
+  neighborhood?: string;
   country: string;
   temperatureCelsius: number;
   feelsLikeCelsius: number;

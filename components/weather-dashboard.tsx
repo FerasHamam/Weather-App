@@ -8,15 +8,15 @@ import type {
 } from "@/lib/weather/types";
 
 const sampleForecast = [
-  { day: "Tomorrow", temperature: "--", icon: "☁" },
-  { day: "Wednesday", temperature: "--", icon: "☀" },
-  { day: "Thursday", temperature: "--", icon: "☁" },
-  { day: "Friday", temperature: "--", icon: "☂" },
-  { day: "Saturday", temperature: "--", icon: "☀" },
+  { day: "Tomorrow", high: "--", low: "--" },
+  { day: "Wednesday", high: "--", low: "--" },
+  { day: "Thursday", high: "--", low: "--" },
+  { day: "Friday", high: "--", low: "--" },
+  { day: "Saturday", high: "--", low: "--" },
 ];
 
 function weatherSymbol(iconCode: string): string {
-  if (iconCode.startsWith("01")) return "☀";
+  if (iconCode.startsWith("01")) return iconCode.endsWith("n") ? "☾" : "☀";
   if (
     iconCode.startsWith("02") ||
     iconCode.startsWith("03") ||
@@ -77,6 +77,7 @@ export function WeatherDashboard() {
       }
 
       setWeather(payload);
+      setCity("");
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -130,14 +131,14 @@ export function WeatherDashboard() {
             </label>
             <input
               id="city-search"
-              className="h-14 min-w-0 flex-1 rounded-2xl border border-[var(--line)] bg-white px-5 text-base outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[#d7654230]"
+              className="h-[64px] min-h-[64px] w-full min-w-0 flex-1 appearance-none rounded-2xl border border-[var(--line)] bg-white px-6 py-4 text-lg leading-6 outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[#d7654230] sm:h-14 sm:min-h-0 sm:w-auto sm:px-5 sm:py-0 sm:text-base"
               placeholder="Search city, e.g. Lisbon"
               value={city}
               onChange={(event) => setCity(event.target.value)}
               autoComplete="off"
             />
             <button
-              className="h-14 rounded-2xl bg-[var(--foreground)] px-6 font-semibold text-white transition hover:bg-[var(--accent-dark)] disabled:cursor-wait disabled:opacity-60"
+              className="h-16 min-w-24 rounded-2xl bg-[var(--foreground)] px-6 font-semibold text-white transition hover:bg-[var(--accent-dark)] disabled:cursor-wait disabled:opacity-60 sm:h-14"
               type="submit"
               disabled={isLoading}
             >
@@ -145,35 +146,36 @@ export function WeatherDashboard() {
             </button>
           </form>
 
-          {recentSearches.length > 0 && (
-            <div
-              className="mt-5 flex flex-wrap gap-2"
-              aria-label="Recent searches"
-            >
-              {recentSearches.map((recentSearch) => (
-                <button
-                  key={recentSearch.city}
-                  className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-sm text-[var(--ink-muted)]"
-                  type="button"
-                  onClick={() => setCity(recentSearch.city)}
-                >
-                  {recentSearch.city}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="mt-5 min-h-8" aria-label="Recent searches">
+            {recentSearches.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {recentSearches.map((recentSearch) => (
+                  <button
+                    key={recentSearch.city}
+                    className="rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-sm text-[var(--ink-muted)]"
+                    type="button"
+                    onClick={() => setCity(recentSearch.city)}
+                  >
+                    {recentSearch.city}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-          {error && (
-            <p
-              className="mt-4 text-sm font-medium text-[var(--accent-dark)]"
-              role="alert"
-            >
-              {error}
-            </p>
-          )}
+          <div className="mt-4 flex h-10 items-start" aria-live="polite">
+            {error && (
+              <p
+                className="text-sm font-medium leading-5 text-[var(--accent-dark)]"
+                role="alert"
+              >
+                {error}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[2rem] bg-[var(--sky)] p-6 shadow-[0_24px_70px_-38px_#537d75] sm:p-8">
+        <div className="relative min-h-[26rem] overflow-hidden rounded-[2rem] bg-[var(--sky)] p-6 shadow-[0_24px_70px_-38px_#537d75] sm:min-h-[28rem] sm:p-8">
           <div
             className="absolute -right-20 -top-24 size-72 rounded-full border-[30px] border-white/40"
             aria-hidden="true"
@@ -189,6 +191,11 @@ export function WeatherDashboard() {
                     <h2 className="mt-2 text-3xl font-semibold">
                       {weather.current.city}
                     </h2>
+                    {weather.current.neighborhood && (
+                      <p className="mt-1 text-sm text-[var(--ink-muted)]">
+                        {weather.current.neighborhood}
+                      </p>
+                    )}
                     <p className="mt-1 capitalize text-[var(--ink-muted)]">
                       {weather.current.description}
                     </p>
@@ -265,8 +272,8 @@ export function WeatherDashboard() {
                 day: new Date(day.date).toLocaleDateString(undefined, {
                   weekday: "short",
                 }),
-                temperature: `${Math.round(day.temperatureCelsius)}°`,
-                icon: weatherSymbol(day.iconCode),
+                high: `${Math.round(day.maxTemperatureCelsius)}°`,
+                low: `${Math.round(day.minTemperatureCelsius)}°`,
               }))
             : sampleForecast
           ).map((forecastDay) => (
@@ -277,8 +284,12 @@ export function WeatherDashboard() {
               <p className="text-sm text-[var(--ink-muted)]">
                 {forecastDay.day}
               </p>
-              <p className="mt-4 text-2xl">{forecastDay.icon}</p>
-              <p className="mt-2 font-semibold">{forecastDay.temperature}</p>
+              <div className="mt-6 flex items-center gap-3 text-lg font-semibold">
+                <span>{forecastDay.high}</span>
+                <span className="text-sm font-normal text-[var(--ink-muted)]">
+                  / {forecastDay.low}
+                </span>
+              </div>
             </div>
           ))}
         </div>

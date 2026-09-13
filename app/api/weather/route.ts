@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getCachedWeather,
-  normalizeCity,
   setCachedWeather,
 } from "@/lib/weather/cache";
+import { formatCityName, normalizeCity } from "@/lib/weather/helpers";
 import { recordRecentSearch } from "@/lib/weather/recent-searches";
 import { fetchWeather, WeatherProviderError } from "@/lib/weather/provider";
 import { getOrCreateSessionId } from "@/lib/weather/session";
@@ -48,11 +48,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const cachedWeather = getCachedWeather(city);
   if (cachedWeather) {
+    const cachedLocationName = cachedWeather.current.city;
+    const weatherWithSearchCity = {
+      ...cachedWeather,
+      current: {
+        ...cachedWeather.current,
+        city: formatCityName(city),
+        neighborhood:
+          cachedWeather.current.neighborhood ??
+          (cachedLocationName.toLowerCase() === city.toLowerCase()
+            ? undefined
+            : cachedLocationName),
+      },
+    };
     recordRecentSearch(sessionId, {
-      city: cachedWeather.current.city,
-      country: cachedWeather.current.country,
+      city: weatherWithSearchCity.current.city,
+      country: weatherWithSearchCity.current.country,
     });
-    return withSession(NextResponse.json(cachedWeather), sessionId);
+    return withSession(NextResponse.json(weatherWithSearchCity), sessionId);
   }
 
   try {

@@ -1,4 +1,5 @@
 import type { CurrentWeather, DailyForecast, WeatherResponse } from "./types";
+import { formatCityName } from "./helpers";
 
 const API_BASE_URL =
   process.env.OPENWEATHER_API_BASE_URL ?? "https://api.openweathermap.org";
@@ -221,7 +222,11 @@ export async function fetchWeather(city: string): Promise<WeatherResponse> {
   }
 
   const currentWeather: CurrentWeather = {
-    city: currentPayload.name,
+    city: formatCityName(city),
+    neighborhood:
+      currentPayload.name.toLowerCase() === city.toLowerCase()
+        ? undefined
+        : currentPayload.name,
     country: currentPayload.sys?.country ?? coordinates.country ?? "",
     temperatureCelsius: currentPayload.main.temp,
     feelsLikeCelsius: currentPayload.main.feels_like,

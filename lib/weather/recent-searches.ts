@@ -1,4 +1,5 @@
 import type { RecentSearch } from "./types";
+import { formatCityName } from "./helpers";
 
 const MAX_RECENT_SEARCHES = 5;
 const recentSearchesBySession = new Map<string, RecentSearch[]>();
@@ -13,7 +14,7 @@ export function recordRecentSearch(
   sessionId: string,
   search: RecentSearch,
 ): void {
-  const normalizedCity = search.city.trim().replace(/\s+/g, " ");
+  const normalizedCity = formatCityName(search.city);
   const searches = recentSearchesBySession.get(sessionId) ?? [];
   const existingIndex = searches.findIndex(
     (item) => item.city.toLowerCase() === normalizedCity.toLowerCase(),

@@ -40,7 +40,6 @@ type ForecastPayload = {
   list: Array<{
     dt_txt: string;
     main: { temp: number; temp_min: number; temp_max: number };
-    weather: Array<{ description: string; icon: string }>;
   }>;
 };
 
@@ -84,12 +83,7 @@ function isForecastPayload(value: unknown): value is ForecastPayload {
         isRecord(item.main) &&
         typeof item.main.temp === "number" &&
         typeof item.main.temp_min === "number" &&
-        typeof item.main.temp_max === "number" &&
-        Array.isArray(item.weather) &&
-        item.weather.length > 0 &&
-        isRecord(item.weather[0]) &&
-        typeof item.weather[0].description === "string" &&
-        typeof item.weather[0].icon === "string",
+        typeof item.main.temp_max === "number",
     )
   );
 }
@@ -179,8 +173,6 @@ function mapForecast(payload: ForecastPayload): DailyForecast[] {
       temperatureCelsius: entry.main.temp,
       minTemperatureCelsius: entry.main.temp_min,
       maxTemperatureCelsius: entry.main.temp_max,
-      description: entry.weather[0].description,
-      iconCode: entry.weather[0].icon,
     });
   }
 

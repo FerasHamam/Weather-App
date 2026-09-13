@@ -7,13 +7,14 @@ import {
 
 describe("recent searches", () => {
   test("moves duplicates to the front and caps the list at five", () => {
-    clearRecentSearches();
+    const sessionId = "test-session";
+    clearRecentSearches(sessionId);
     ["Lisbon", "Berlin", "Paris", "Tokyo", "Lima", "Oslo"].forEach((city) =>
-      recordRecentSearch({ city }),
+      recordRecentSearch(sessionId, { city }),
     );
-    recordRecentSearch({ city: " berlin " });
+    recordRecentSearch(sessionId, { city: " berlin " });
 
-    expect(listRecentSearches().map((search) => search.city)).toEqual([
+    expect(listRecentSearches(sessionId).map((search) => search.city)).toEqual([
       "berlin",
       "Oslo",
       "Lima",

@@ -43,7 +43,7 @@ The browser calls the Next.js Route Handler at `GET /api/weather?city=...`. The 
 
 Provider DTOs are kept separate from UI types so OpenWeatherMap response details do not leak into the client. The dashboard is a client component because it owns form input and request state; the page and layout remain server-rendered composition boundaries. API keys are read only in server modules.
 
-The cache and recent-search store are intentionally lightweight for the assessment and require no external database. In-memory state is local to a running process, so Vercel serverless instances may not share it and it is not durable across restarts. A production version would use a shared cache and durable store such as Redis or a managed database.
+The cache and recent-search store are intentionally lightweight for the assessment and require no external database. Weather caching is shared by the server process because weather data is public. Recent searches are scoped by an anonymous `HttpOnly` session cookie, so browser sessions do not see one another's search history. Both stores are local to a running process, so separate serverless instances may not share them and they are not durable across restarts. A production version would use a shared cache and durable store such as Redis or a managed database.
 
 ## Error behavior
 

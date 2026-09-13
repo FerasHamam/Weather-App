@@ -1,26 +1,40 @@
 import type { RecentSearch } from "./types";
 
 const MAX_RECENT_SEARCHES = 5;
-const recentSearches: RecentSearch[] = [];
+const recentSearchesBySession = new Map<string, RecentSearch[]>();
 
-export function listRecentSearches(): RecentSearch[] {
-  return recentSearches.map((search) => ({ ...search }));
+export function listRecentSearches(sessionId: string): RecentSearch[] {
+  return (recentSearchesBySession.get(sessionId) ?? []).map((search) => ({
+    ...search,
+  }));
 }
 
-export function recordRecentSearch(search: RecentSearch): void {
+export function recordRecentSearch(
+  sessionId: string,
+  search: RecentSearch,
+): void {
   const normalizedCity = search.city.trim().replace(/\s+/g, " ");
-  const existingIndex = recentSearches.findIndex(
+  const searches = recentSearchesBySession.get(sessionId) ?? [];
+  const existingIndex = searches.findIndex(
     (item) => item.city.toLowerCase() === normalizedCity.toLowerCase(),
   );
 
   if (existingIndex >= 0) {
-    recentSearches.splice(existingIndex, 1);
+    searches.splice(existingIndex, 1);
   }
 
-  recentSearches.unshift({ ...search, city: normalizedCity });
-  recentSearches.splice(MAX_RECENT_SEARCHES);
+  searches.unshift({ ...search, city: normalizedCity });
+  recentSearchesBySession.set(
+    sessionId,
+    searches.slice(0, MAX_RECENT_SEARCHES),
+  );
 }
 
-export function clearRecentSearches(): void {
-  recentSearches.length = 0;
+export function clearRecentSearches(sessionId?: string): void {
+  if (sessionId) {
+    recentSearchesBySession.delete(sessionId);
+    return;
+  }
+
+  recentSearchesBySession.clear();
 }

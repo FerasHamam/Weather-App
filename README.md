@@ -1,6 +1,6 @@
 # Skyline Weather
 
-A full-stack weather dashboard built for the Ard Group Software Engineer technical assessment. Search for a city to see current conditions and a five-day forecast.
+A full-stack weather dashboard. Search for a city to see current conditions and a five-day forecast.
 
 ## Stack
 

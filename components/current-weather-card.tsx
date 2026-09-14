@@ -8,9 +8,9 @@ type CurrentWeatherCardProps = {
 
 export function CurrentWeatherCard({ weather }: CurrentWeatherCardProps) {
   return (
-    <div className="relative min-h-[26rem] overflow-hidden rounded-[2rem] bg-[var(--sky)] p-6 shadow-[0_24px_70px_-38px_#537d75] sm:min-h-[28rem] sm:p-8">
+    <div className="relative min-h-[26rem] overflow-hidden rounded-[2rem] bg-[var(--sky)] p-6 shadow-[0_24px_70px_-38px_var(--shadow-color)] sm:min-h-[28rem] sm:p-8">
       <div
-        className="absolute -right-20 -top-24 size-72 rounded-full border-[30px] border-white/40"
+        className="absolute -right-20 -top-24 size-72 rounded-full border-[30px] border-[var(--decorative-ring)]"
         aria-hidden="true"
       />
       <div className="relative">
@@ -57,8 +57,8 @@ export function CurrentWeatherCard({ weather }: CurrentWeatherCardProps) {
           </>
         )}
 
-        <div className="mt-10 grid grid-cols-3 gap-3 border-t border-[#ffffff80] pt-6 text-sm">
-          <div className="flex flex-col items-start gap-2 rounded-2xl bg-white/50 p-3">
+        <div className="mt-10 grid grid-cols-3 gap-3 border-t border-[var(--divider)] pt-6 text-sm">
+          <div className="flex flex-col items-start gap-2 rounded-2xl bg-[var(--stat-surface)] p-3">
             <Droplet size={18} className="text-[var(--accent-dark)]" />
             <div>
               <p className="text-[var(--ink-muted)]">Humidity</p>
@@ -67,7 +67,7 @@ export function CurrentWeatherCard({ weather }: CurrentWeatherCardProps) {
               </p>
             </div>
           </div>
-          <div className="flex flex-col items-start gap-2 rounded-2xl bg-white/50 p-3">
+          <div className="flex flex-col items-start gap-2 rounded-2xl bg-[var(--stat-surface)] p-3">
             <Wind size={18} className="text-[var(--accent-dark)]" />
             <div>
               <p className="text-[var(--ink-muted)]">Wind</p>
@@ -78,7 +78,7 @@ export function CurrentWeatherCard({ weather }: CurrentWeatherCardProps) {
               </p>
             </div>
           </div>
-          <div className="flex flex-col items-start gap-2 rounded-2xl bg-white/50 p-3">
+          <div className="flex flex-col items-start gap-2 rounded-2xl bg-[var(--stat-surface)] p-3">
             <Thermometer size={18} className="text-[var(--accent-dark)]" />
             <div>
               <p className="text-[var(--ink-muted)]">Feels like</p>

@@ -1,3 +1,5 @@
+import { ThemeToggle } from "@/components/theme-toggle";
+
 export function DashboardHeader() {
   return (
     <header className="flex items-center justify-between border-b border-[var(--line)] pb-6">
@@ -12,9 +14,12 @@ export function DashboardHeader() {
           <p className="text-xs text-[var(--ink-muted)]">Weather desk</p>
         </div>
       </div>
-      <p className="hidden text-right text-sm text-[var(--ink-muted)] sm:block">
-        A clear view of what&apos;s ahead
-      </p>
+      <div className="flex items-center gap-4">
+        <p className="hidden text-right text-sm text-[var(--ink-muted)] sm:block">
+          A clear view of what&apos;s ahead
+        </p>
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

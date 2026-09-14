@@ -17,13 +17,27 @@ export const metadata: Metadata = {
   description: "A focused weather dashboard for your next forecast.",
 };
 
+const THEME_INIT_SCRIPT = `
+  try {
+    var theme = localStorage.getItem("weather-theme");
+    var isDark = theme
+      ? theme === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (isDark) document.documentElement.classList.add("dark");
+  } catch (e) {}
+`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {children}
+      </body>
     </html>
   );
 }

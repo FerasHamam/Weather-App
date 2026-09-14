@@ -62,7 +62,7 @@ export function ForecastSection({ weather }: ForecastSectionProps) {
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {forecast.map((forecastDay) => (
           <div
-            className="group relative flex min-h-40 flex-col items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-4 text-center transition duration-200 hover:-translate-y-1 hover:border-[var(--accent)]/40 hover:shadow-[0_16px_40px_-24px_#537d75]"
+            className="group relative flex min-h-40 flex-col items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-4 text-center transition duration-200 hover:-translate-y-1 hover:border-[var(--accent)]/40 hover:shadow-[0_16px_40px_-24px_var(--shadow-color)]"
             key={forecastDay.key}
           >
             {forecastDay.isToday && (

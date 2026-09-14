@@ -9,6 +9,27 @@
   --accent: #d76542;
   --accent-dark: #a9452b;
   --sky: #dcebea;
+  --cta: #1b2923;
+  --cta-hover: #a9452b;
+  --stat-surface: rgba(255, 255, 255, 0.5);
+  --decorative-ring: rgba(255, 255, 255, 0.4);
+  --divider: rgba(255, 255, 255, 0.5);
+  --shadow-color: #537d75;
+}
+
+.dark {
+  --background: #12201a;
+  --foreground: #eef2ee;
+  --ink-muted: #93a69b;
+  --line: #24352c;
+  --panel: #182a22;
+  --accent: #e8794f;
+  --accent-dark: #f3a884;
+  --sky: #1f3a34;
+  --stat-surface: rgba(24, 42, 34, 0.55);
+  --decorative-ring: rgba(255, 255, 255, 0.12);
+  --divider: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.4);
 }
 
 @theme inline {
@@ -32,4 +53,9 @@ input {
 ::selection {
   background: #f2b39f;
   color: #1b2923;
+}
+
+.dark ::selection {
+  background: #a9452b;
+  color: #eef2ee;
 }

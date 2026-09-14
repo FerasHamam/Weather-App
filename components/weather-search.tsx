@@ -40,14 +40,14 @@ export function WeatherSearch({
         </label>
         <input
           id="city-search"
-          className="h-[64px] min-h-[64px] w-full min-w-0 flex-1 appearance-none rounded-2xl border border-[var(--line)] bg-white px-6 py-4 text-lg leading-6 outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[#d7654230] sm:h-14 sm:min-h-0 sm:w-auto sm:px-5 sm:py-0 sm:text-base"
+          className="h-[64px] min-h-[64px] w-full min-w-0 flex-1 appearance-none rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-6 py-4 text-lg leading-6 text-[var(--foreground)] outline-none transition placeholder:text-[var(--ink-muted)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[#d7654230] sm:h-14 sm:min-h-0 sm:w-auto sm:px-5 sm:py-0 sm:text-base"
           placeholder="Search city, e.g. Lisbon"
           value={city}
           onChange={(event) => onCityChange(event.target.value)}
           autoComplete="off"
         />
         <button
-          className="flex h-16 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] px-6 font-semibold text-white transition hover:bg-[var(--accent-dark)] disabled:cursor-wait disabled:opacity-60 sm:h-14 sm:w-32 sm:shrink-0"
+          className="flex h-16 w-full cursor-pointer items-center justify-center rounded-2xl bg-[var(--cta)] px-6 font-semibold text-white transition hover:bg-[var(--cta-hover)] disabled:cursor-wait disabled:opacity-60 sm:h-14 sm:w-32 sm:shrink-0"
           type="submit"
           disabled={isLoading}
         >
@@ -61,7 +61,7 @@ export function WeatherSearch({
             {recentSearches.map((recentSearch) => (
               <button
                 key={recentSearch.city}
-                className="cursor-pointer rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-sm text-[var(--ink-muted)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent-dark)] hover:shadow-[0_8px_20px_-12px_#537d75] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#d7654230]"
+                className="cursor-pointer rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 text-sm text-[var(--ink-muted)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent-dark)] hover:shadow-[0_8px_20px_-12px_var(--shadow-color)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#d7654230]"
                 type="button"
                 onClick={() => onCityChange(recentSearch.city)}
               >

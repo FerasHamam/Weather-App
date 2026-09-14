@@ -89,16 +89,19 @@ export function WeatherSearch({
         {recentSearches.length > 0 && (
           <ul className="flex list-none flex-wrap gap-2 p-0">
             {recentSearches.map((recentSearch) => (
-              <li key={recentSearch.city}>
+              <li key={recentSearch.city} className="max-w-full">
                 <button
-                  className="cursor-pointer rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 text-sm text-[var(--ink-muted)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent-dark)] hover:shadow-[0_8px_20px_-12px_var(--shadow-color)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] disabled:cursor-wait disabled:opacity-60"
+                  className="flex max-w-[10rem] cursor-pointer items-center rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 text-sm text-[var(--ink-muted)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent-dark)] hover:shadow-[0_8px_20px_-12px_var(--shadow-color)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] disabled:cursor-wait disabled:opacity-60"
                   type="button"
+                  title={recentSearch.city}
                   onClick={() => onSelectRecent(recentSearch.city)}
                   disabled={isSearching}
                 >
-                  {recentSearch.city}
+                  <span className="min-w-0 truncate">
+                    {recentSearch.city}
+                  </span>
                   {recentSearch.country && (
-                    <span className="ml-1 opacity-60">
+                    <span className="ml-1 shrink-0 opacity-60">
                       {recentSearch.country}
                     </span>
                   )}

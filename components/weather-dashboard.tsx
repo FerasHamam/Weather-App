@@ -19,7 +19,9 @@ export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState<WeatherResponse | null>(null);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // Starts true: geolocation is always attempted on mount, so the first
+  // paint should show the loading skeleton, never the empty idle state.
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,22 +36,12 @@ export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
       .catch(() => undefined);
   }, [weather]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const normalizedCity = city.trim();
-
-    if (!normalizedCity) {
-      setError("Enter a city to see its forecast.");
-      return;
-    }
-
+  async function loadWeather(url: string): Promise<boolean> {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/weather?city=${encodeURIComponent(normalizedCity)}`,
-      );
+      const response = await fetch(url);
       const payload = (await response.json()) as
         | WeatherResponse
         | ApiErrorResponse;
@@ -63,17 +55,80 @@ export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
       }
 
       setWeather(payload);
-      setCity("");
+      return true;
     } catch (requestError) {
       setError(
         requestError instanceof Error
           ? requestError.message
           : "Weather data is unavailable.",
       );
+      return false;
     } finally {
       setIsLoading(false);
     }
   }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const normalizedCity = city.trim();
+
+    if (!normalizedCity) {
+      setError("Enter a city to see its forecast.");
+      return;
+    }
+
+    const success = await loadWeather(
+      `/api/weather?city=${encodeURIComponent(normalizedCity)}`,
+    );
+    if (success) {
+      setCity("");
+    }
+  }
+
+  function requestLocation(isStale: () => boolean = () => false) {
+    if (!("geolocation" in navigator)) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // Ignore a stale request left over from Strict Mode's mount ->
+        // cleanup -> mount dev cycle, so it can't clobber a newer result.
+        if (isStale()) {
+          return;
+        }
+        void loadWeather(
+          `/api/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}`,
+        );
+      },
+      () => {
+        if (isStale()) {
+          return;
+        }
+        // Permission denied or unavailable: leave the dashboard as it was.
+        setIsLoading(false);
+      },
+      { timeout: 10_000 },
+    );
+  }
+
+  function handleUseMyLocation() {
+    requestLocation();
+  }
+
+  useEffect(() => {
+    let stale = false;
+    // One-time browser geolocation request on mount, not a state sync.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    requestLocation(() => stale);
+    return () => {
+      stale = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -87,11 +142,12 @@ export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
           recentSearches={recentSearches}
           onCityChange={setCity}
           onSubmit={handleSubmit}
+          onUseMyLocation={handleUseMyLocation}
         />
-        <CurrentWeatherCard weather={weather} />
+        <CurrentWeatherCard weather={weather} isLoading={isLoading} />
       </section>
 
-      <ForecastSection weather={weather} />
+      <ForecastSection weather={weather} isLoading={isLoading} />
       {footer}
     </main>
   );

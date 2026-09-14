@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { MapPin } from "@deemlol/next-icons";
 import type { RecentSearch } from "@/lib/weather/types";
 
 type WeatherSearchProps = {
@@ -8,6 +9,7 @@ type WeatherSearchProps = {
   recentSearches: RecentSearch[];
   onCityChange: (city: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onUseMyLocation: () => void;
 };
 
 export function WeatherSearch({
@@ -17,6 +19,7 @@ export function WeatherSearch({
   recentSearches,
   onCityChange,
   onSubmit,
+  onUseMyLocation,
 }: WeatherSearchProps) {
   return (
     <div>
@@ -55,7 +58,20 @@ export function WeatherSearch({
         </button>
       </form>
 
-      <div className="mt-5 min-h-8" aria-label="Recent searches">
+      <button
+        className="mt-3 inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-[var(--ink-muted)] transition hover:text-[var(--accent-dark)] disabled:cursor-wait disabled:opacity-60"
+        type="button"
+        onClick={onUseMyLocation}
+        disabled={isLoading}
+      >
+        <MapPin size={16} />
+        Use my location
+      </button>
+
+      <div
+        className="mt-5 h-[4.5rem] overflow-hidden"
+        aria-label="Recent searches"
+      >
         {recentSearches.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {recentSearches.map((recentSearch) => (

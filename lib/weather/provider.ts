@@ -1,5 +1,5 @@
 import type { CurrentWeather, DailyForecast, WeatherResponse } from "./types";
-import { formatCityName } from "./helpers";
+import { formatCityName, normalizeCity } from "./helpers";
 
 const API_BASE_URL =
   process.env.OPENWEATHER_API_BASE_URL ?? "https://api.openweathermap.org";
@@ -200,33 +200,20 @@ function mapForecast(payload: ForecastPayload): DailyForecast[] {
   return [...byDate.values()].slice(0, 5);
 }
 
-export async function fetchWeather(city: string): Promise<WeatherResponse> {
-  const apiKey = getApiKey();
-  const geocodeUrl = new URL(`${API_BASE_URL}/geo/1.0/direct`);
-  geocodeUrl.searchParams.set("q", city);
-  geocodeUrl.searchParams.set("limit", "1");
-  geocodeUrl.searchParams.set("appid", apiKey);
-
-  const geocodePayload = await fetchProvider(geocodeUrl);
-
-  // OpenWeatherMap Returns an Array by Design [{...}]
-  if (!Array.isArray(geocodePayload) || !isCoordinates(geocodePayload[0])) {
-    throw new WeatherProviderError(
-      "invalid-city",
-      "We could not find that city.",
-    );
-  }
-
-  const coordinates = geocodePayload[0];
+async function fetchCurrentAndForecast(
+  lat: number,
+  lon: number,
+  apiKey: string,
+): Promise<{ currentPayload: CurrentPayload; forecastPayload: ForecastPayload }> {
   const currentUrl = new URL(`${API_BASE_URL}/data/2.5/weather`);
-  currentUrl.searchParams.set("lat", String(coordinates.lat));
-  currentUrl.searchParams.set("lon", String(coordinates.lon));
+  currentUrl.searchParams.set("lat", String(lat));
+  currentUrl.searchParams.set("lon", String(lon));
   currentUrl.searchParams.set("units", "metric");
   currentUrl.searchParams.set("appid", apiKey);
 
   const forecastUrl = new URL(`${API_BASE_URL}/data/2.5/forecast`);
-  forecastUrl.searchParams.set("lat", String(coordinates.lat));
-  forecastUrl.searchParams.set("lon", String(coordinates.lon));
+  forecastUrl.searchParams.set("lat", String(lat));
+  forecastUrl.searchParams.set("lon", String(lon));
   forecastUrl.searchParams.set("units", "metric");
   forecastUrl.searchParams.set("appid", apiKey);
 
@@ -245,6 +232,33 @@ export async function fetchWeather(city: string): Promise<WeatherResponse> {
     );
   }
 
+  return { currentPayload, forecastPayload };
+}
+
+export async function fetchWeather(city: string): Promise<WeatherResponse> {
+  const apiKey = getApiKey();
+  const geocodeUrl = new URL(`${API_BASE_URL}/geo/1.0/direct`);
+  geocodeUrl.searchParams.set("q", city);
+  geocodeUrl.searchParams.set("limit", "1");
+  geocodeUrl.searchParams.set("appid", apiKey);
+
+  const geocodePayload = await fetchProvider(geocodeUrl);
+
+  // OpenWeatherMap Returns an Array by Design [{...}]
+  if (!Array.isArray(geocodePayload) || !isCoordinates(geocodePayload[0])) {
+    throw new WeatherProviderError(
+      "invalid-city",
+      "We could not find that city.",
+    );
+  }
+
+  const coordinates = geocodePayload[0];
+  const { currentPayload, forecastPayload } = await fetchCurrentAndForecast(
+    coordinates.lat,
+    coordinates.lon,
+    apiKey,
+  );
+
   const currentWeather: CurrentWeather = {
     city: formatCityName(city),
     neighborhood:
@@ -252,6 +266,36 @@ export async function fetchWeather(city: string): Promise<WeatherResponse> {
         ? undefined
         : currentPayload.name,
     country: currentPayload.sys?.country ?? coordinates.country ?? "",
+    temperatureCelsius: currentPayload.main.temp,
+    feelsLikeCelsius: currentPayload.main.feels_like,
+    humidityPercent: currentPayload.main.humidity,
+    windSpeedMetersPerSecond: currentPayload.wind?.speed ?? 0,
+    description: currentPayload.weather[0].description,
+    iconCode: currentPayload.weather[0].icon,
+  };
+
+  return {
+    current: currentWeather,
+    forecast: mapForecast(forecastPayload),
+    cached: false,
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+export async function fetchWeatherByCoordinates(
+  lat: number,
+  lon: number,
+): Promise<WeatherResponse> {
+  const apiKey = getApiKey();
+  const { currentPayload, forecastPayload } = await fetchCurrentAndForecast(
+    lat,
+    lon,
+    apiKey,
+  );
+
+  const currentWeather: CurrentWeather = {
+    city: normalizeCity(currentPayload.name),
+    country: currentPayload.sys?.country ?? "",
     temperatureCelsius: currentPayload.main.temp,
     feelsLikeCelsius: currentPayload.main.feels_like,
     humidityPercent: currentPayload.main.humidity,

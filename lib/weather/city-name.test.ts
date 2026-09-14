@@ -12,8 +12,8 @@ describe("formatCityName", () => {
     expect(formatCityName("winston-salem")).toBe("Winston-Salem");
   });
 
-  test("keeps particles lowercase after the first word", () => {
-    expect(formatCityName("rio de janeiro")).toBe("Rio de Janeiro");
+  test("capitalizes every word, including short particles", () => {
+    expect(formatCityName("rio de janeiro")).toBe("Rio De Janeiro");
   });
 
   test("leaves names that already carry their own casing alone", () => {

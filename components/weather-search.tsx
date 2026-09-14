@@ -81,7 +81,9 @@ export function WeatherSearch({
       </button>
 
       <nav
-        className="mt-0 h-[160px] overflow-hidden p-2"
+        className={`overflow-hidden lg:mt-3 lg:h-[160px] lg:p-2 ${
+          recentSearches.length > 0 ? "mt-3 h-[140px] p-2" : "h-0"
+        }`}
         aria-label="Recent searches"
       >
         {recentSearches.length > 0 && (

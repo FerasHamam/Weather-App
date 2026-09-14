@@ -1,11 +1,15 @@
-import type { WeatherResponse } from "@/lib/weather/types";
+import type { CurrentWeather } from "@/lib/weather/model";
 import { WeatherIcon } from "@/components/weather-icon";
 
 type CurrentWeatherLoadedProps = {
-  weather: WeatherResponse;
+  current: CurrentWeather;
+  fetchedAt?: string;
 };
 
-export function CurrentWeatherLoaded({ weather }: CurrentWeatherLoadedProps) {
+export function CurrentWeatherLoaded({
+  current,
+  fetchedAt,
+}: CurrentWeatherLoadedProps) {
   return (
     <>
       <div className="flex items-start justify-between gap-4">
@@ -14,27 +18,40 @@ export function CurrentWeatherLoaded({ weather }: CurrentWeatherLoadedProps) {
             Current conditions
           </p>
           <h2 className="mt-2 truncate text-3xl font-semibold">
-            {weather.current.city}
+            {current.city}
           </h2>
           <p
             className="mt-1 h-5 truncate text-sm leading-5 text-[var(--ink-muted)]"
-            aria-hidden={!weather.current.neighborhood}
+            aria-hidden={!current.neighborhood}
           >
-            {weather.current.neighborhood ?? " "}
+            {current.neighborhood ?? " "}
           </p>
           <p className="mt-1 capitalize text-[var(--ink-muted)]">
-            {weather.current.description}
+            {current.description}
           </p>
         </div>
         <WeatherIcon
           className="text-[var(--accent-dark)]"
           size={56}
-          iconCode={weather.current.iconCode}
-          aria-label={weather.current.description}
+          iconCode={current.iconCode}
+          aria-label={current.description}
         />
       </div>
       <p className="mt-10 text-7xl font-semibold tracking-[-0.06em]">
-        {Math.round(weather.current.temperatureCelsius)}°
+        {Math.round(current.temperatureCelsius)}°
+      </p>
+      <p className="mt-2 h-5 text-xs leading-5 text-[var(--ink-muted)]">
+        {fetchedAt && (
+          <>
+            {"Updated "}
+            <time dateTime={fetchedAt}>
+              {new Date(fetchedAt).toLocaleTimeString(undefined, {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </time>
+          </>
+        )}
       </p>
     </>
   );

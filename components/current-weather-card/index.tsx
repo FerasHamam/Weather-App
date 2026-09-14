@@ -1,17 +1,46 @@
-import { Droplet, Thermometer, Wind } from "@deemlol/next-icons";
-import type { WeatherResponse } from "@/lib/weather/types";
+import { Droplet, Thermometer, Wind } from "@/components/icons";
+import type { ReactNode } from "react";
+import type { CurrentWeather } from "@/lib/weather/model";
 import { CurrentWeatherEmpty } from "./empty";
 import { CurrentWeatherLoaded } from "./loaded";
 import { CurrentWeatherSkeleton } from "./skeleton";
 import { StatItem } from "./stat-item";
 
+type Stat = {
+  label: string;
+  icon: ReactNode;
+  format: (current: CurrentWeather) => string;
+};
+
+const iconClassName = "text-[var(--accent-dark)]";
+
+const STATS: Stat[] = [
+  {
+    label: "Humidity",
+    icon: <Droplet size={18} className={iconClassName} />,
+    format: (current) => `${current.humidityPercent}%`,
+  },
+  {
+    label: "Wind",
+    icon: <Wind size={18} className={iconClassName} />,
+    format: (current) => `${Math.round(current.windSpeedMetersPerSecond)} m/s`,
+  },
+  {
+    label: "Feels like",
+    icon: <Thermometer size={18} className={iconClassName} />,
+    format: (current) => `${Math.round(current.feelsLikeCelsius)}°`,
+  },
+];
+
 type CurrentWeatherCardProps = {
-  weather: WeatherResponse | null;
+  current: CurrentWeather | null;
+  fetchedAt?: string;
   isLoading?: boolean;
 };
 
 export function CurrentWeatherCard({
-  weather,
+  current,
+  fetchedAt,
   isLoading = false,
 }: CurrentWeatherCardProps) {
   return (
@@ -26,41 +55,22 @@ export function CurrentWeatherCard({
       >
         {isLoading ? (
           <CurrentWeatherSkeleton />
-        ) : weather ? (
-          <CurrentWeatherLoaded weather={weather} />
+        ) : current ? (
+          <CurrentWeatherLoaded current={current} fetchedAt={fetchedAt} />
         ) : (
           <CurrentWeatherEmpty />
         )}
 
         <div className="mt-auto grid grid-cols-3 gap-3 border-t border-[var(--divider)] pt-6 text-sm">
-          <StatItem
-            icon={<Droplet size={18} className="text-[var(--accent-dark)]" />}
-            label="Humidity"
-            value={weather ? `${weather.current.humidityPercent}%` : "--"}
-            isLoading={isLoading}
-          />
-          <StatItem
-            icon={<Wind size={18} className="text-[var(--accent-dark)]" />}
-            label="Wind"
-            value={
-              weather
-                ? `${weather.current.windSpeedMetersPerSecond} m/s`
-                : "--"
-            }
-            isLoading={isLoading}
-          />
-          <StatItem
-            icon={
-              <Thermometer size={18} className="text-[var(--accent-dark)]" />
-            }
-            label="Feels like"
-            value={
-              weather
-                ? `${Math.round(weather.current.feelsLikeCelsius)}°`
-                : "--"
-            }
-            isLoading={isLoading}
-          />
+          {STATS.map((stat) => (
+            <StatItem
+              key={stat.label}
+              icon={stat.icon}
+              label={stat.label}
+              value={current ? stat.format(current) : "--"}
+              isLoading={isLoading}
+            />
+          ))}
         </div>
       </div>
     </div>

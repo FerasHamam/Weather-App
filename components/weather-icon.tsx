@@ -6,7 +6,7 @@ import {
   CloudSnow,
   Moon,
   Sun,
-} from "@deemlol/next-icons";
+} from "@/components/icons";
 
 type WeatherIconProps = {
   iconCode: string;

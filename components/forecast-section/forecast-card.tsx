@@ -1,15 +1,5 @@
 import { WeatherIcon } from "@/components/weather-icon";
-
-export type ForecastCardData = {
-  key: string;
-  day: string;
-  dateLabel: string;
-  high: string;
-  low: string;
-  iconCode?: string;
-  description?: string;
-  isToday?: boolean;
-};
+import type { ForecastCardData } from "./view-model";
 
 type ForecastDayCardProps = {
   day: ForecastCardData;

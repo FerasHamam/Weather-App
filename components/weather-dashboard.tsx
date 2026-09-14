@@ -1,127 +1,145 @@
 "use client";
 
-import { FormEvent, ReactNode, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { CurrentWeatherCard } from "@/components/current-weather-card";
 import { ForecastSection } from "@/components/forecast-section";
 import { WeatherSearch } from "@/components/weather-search";
-import type {
-  ApiErrorResponse,
-  RecentSearch,
-  WeatherResponse,
-} from "@/lib/weather/types";
+import {
+  isApiErrorResponse,
+  type ApiErrorResponse,
+  type WeatherApiResponse,
+} from "@/lib/api/contract";
+import type { RecentSearch } from "@/lib/weather/model";
+
+const GENERIC_ERROR = "Weather data is unavailable.";
+const GEOLOCATION_TIMEOUT_MS = 10_000;
 
 type WeatherDashboardProps = {
   header: ReactNode;
   footer: ReactNode;
+  initialRecentSearches: RecentSearch[];
 };
 
-export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
+export function WeatherDashboard({
+  header,
+  footer,
+  initialRecentSearches,
+}: WeatherDashboardProps) {
   const [city, setCity] = useState("");
-  const [weather, setWeather] = useState<WeatherResponse | null>(null);
-  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
-  // Starts true: geolocation is always attempted on mount, so the first
-  // paint should show the loading skeleton, never the empty idle state.
-  const [isLoading, setIsLoading] = useState(true);
+  const [weather, setWeather] = useState<WeatherApiResponse | null>(null);
+  const [recentSearches, setRecentSearches] =
+    useState<RecentSearch[]>(initialRecentSearches);
+  const [isSearching, setIsSearching] = useState(false);
+  // Geolocation is attempted once on mount, so the first paint should show the
+  // skeleton rather than the empty state. Tracked apart from `isSearching` so
+  // a pending permission prompt never blocks the search form.
+  const [isLocating, setIsLocating] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void fetch("/api/recent-searches")
-      .then(async (response) => {
-        if (!response.ok) return;
-        const payload = (await response.json()) as {
-          searches?: RecentSearch[];
-        };
-        setRecentSearches(payload.searches ?? []);
-      })
-      .catch(() => undefined);
-  }, [weather]);
+  const requestIdRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
 
-  async function loadWeather(url: string): Promise<boolean> {
-    setIsLoading(true);
+  const loadWeather = useCallback(async (url: string): Promise<boolean> => {
+    // Abort the in-flight request and claim a new id, so a slow earlier
+    // response can never overwrite a newer one.
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const requestId = ++requestIdRef.current;
+    const isCurrent = () => requestIdRef.current === requestId;
+
+    setIsSearching(true);
     setError(null);
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: controller.signal });
       const payload = (await response.json()) as
-        | WeatherResponse
+        | WeatherApiResponse
         | ApiErrorResponse;
 
-      if (!response.ok || "error" in payload) {
+      if (!response.ok || isApiErrorResponse(payload)) {
         throw new Error(
-          "error" in payload
-            ? payload.error.message
-            : "Weather data is unavailable.",
+          isApiErrorResponse(payload) ? payload.error.message : GENERIC_ERROR,
         );
       }
 
+      if (!isCurrent()) {
+        return false;
+      }
+
       setWeather(payload);
+      setRecentSearches(payload.recentSearches);
       return true;
     } catch (requestError) {
+      if (!isCurrent()) {
+        return false;
+      }
       setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Weather data is unavailable.",
+        requestError instanceof Error ? requestError.message : GENERIC_ERROR,
       );
       return false;
     } finally {
-      setIsLoading(false);
+      if (isCurrent()) {
+        setIsSearching(false);
+      }
     }
-  }
+  }, []);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const normalizedCity = city.trim();
+  const searchCity = useCallback(
+    async (rawCity: string) => {
+      const query = rawCity.trim();
 
-    if (!normalizedCity) {
-      setError("Enter a city to see its forecast.");
-      return;
-    }
+      if (!query) {
+        setError("Enter a city to see its forecast.");
+        return;
+      }
 
-    const success = await loadWeather(
-      `/api/weather?city=${encodeURIComponent(normalizedCity)}`,
-    );
-    if (success) {
-      setCity("");
-    }
-  }
+      const success = await loadWeather(
+        `/api/weather?city=${encodeURIComponent(query)}`,
+      );
+      if (success) {
+        setCity("");
+      }
+    },
+    [loadWeather],
+  );
 
-  function requestLocation(isStale: () => boolean = () => false) {
-    if (!("geolocation" in navigator)) {
-      setIsLoading(false);
-      return;
-    }
+  const requestLocation = useCallback(
+    (isStale: () => boolean = () => false) => {
+      if (!("geolocation" in navigator)) {
+        setIsLocating(false);
+        return;
+      }
 
-    setIsLoading(true);
+      setIsLocating(true);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        // Ignore a stale request left over from Strict Mode's mount ->
-        // cleanup -> mount dev cycle, so it can't clobber a newer result.
-        if (isStale()) {
-          return;
-        }
-        void loadWeather(
-          `/api/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}`,
-        ).then((success) => {
-          if (success) {
-            setCity("");
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setIsLocating(false);
+          // Ignore a stale request left over from Strict Mode's mount ->
+          // cleanup -> mount dev cycle.
+          if (isStale()) {
+            return;
           }
-        });
-      },
-      () => {
-        if (isStale()) {
-          return;
-        }
-        // Permission denied or unavailable: leave the dashboard as it was.
-        setIsLoading(false);
-      },
-      { timeout: 10_000 },
-    );
-  }
-
-  function handleUseMyLocation() {
-    requestLocation();
-  }
+          const { latitude, longitude } = position.coords;
+          void loadWeather(`/api/weather?lat=${latitude}&lon=${longitude}`);
+        },
+        () => {
+          // Permission denied or unavailable: leave the dashboard as it was.
+          setIsLocating(false);
+        },
+        { timeout: GEOLOCATION_TIMEOUT_MS },
+      );
+    },
+    [loadWeather],
+  );
 
   useEffect(() => {
     let stale = false;
@@ -131,8 +149,14 @@ export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
     return () => {
       stale = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [requestLocation]);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void searchCity(city);
+  }
+
+  const isLoading = isSearching || isLocating;
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
@@ -142,16 +166,25 @@ export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
         <WeatherSearch
           city={city}
           error={error}
-          isLoading={isLoading}
+          isSearching={isSearching}
+          isLocating={isLocating}
           recentSearches={recentSearches}
           onCityChange={setCity}
           onSubmit={handleSubmit}
-          onUseMyLocation={handleUseMyLocation}
+          onSelectRecent={(recentCity) => void searchCity(recentCity)}
+          onUseMyLocation={() => requestLocation()}
         />
-        <CurrentWeatherCard weather={weather} isLoading={isLoading} />
+        <CurrentWeatherCard
+          current={weather?.current ?? null}
+          fetchedAt={weather?.fetchedAt}
+          isLoading={isLoading}
+        />
       </section>
 
-      <ForecastSection weather={weather} isLoading={isLoading} />
+      <ForecastSection
+        forecast={weather?.forecast ?? null}
+        isLoading={isLoading}
+      />
       {footer}
     </main>
   );

@@ -1,24 +1,28 @@
 import type { FormEvent } from "react";
-import { MapPin } from "@deemlol/next-icons";
-import type { RecentSearch } from "@/lib/weather/types";
+import { MapPin } from "@/components/icons";
+import type { RecentSearch } from "@/lib/weather/model";
 
 type WeatherSearchProps = {
   city: string;
   error: string | null;
-  isLoading: boolean;
+  isSearching: boolean;
+  isLocating: boolean;
   recentSearches: RecentSearch[];
   onCityChange: (city: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSelectRecent: (city: string) => void;
   onUseMyLocation: () => void;
 };
 
 export function WeatherSearch({
   city,
   error,
-  isLoading,
+  isSearching,
+  isLocating,
   recentSearches,
   onCityChange,
   onSubmit,
+  onSelectRecent,
   onUseMyLocation,
 }: WeatherSearchProps) {
   return (
@@ -43,7 +47,7 @@ export function WeatherSearch({
         </label>
         <input
           id="city-search"
-          className="h-[64px] min-h-[64px] w-full min-w-0 flex-1 appearance-none rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-6 py-4 text-lg leading-6 text-[var(--foreground)] outline-none transition placeholder:text-[var(--ink-muted)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[#d7654230] sm:h-14 sm:min-h-0 sm:w-auto sm:px-5 sm:py-0 sm:text-base"
+          className="h-[64px] min-h-[64px] w-full min-w-0 flex-1 appearance-none rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-6 py-4 text-lg leading-6 text-[var(--foreground)] outline-none transition placeholder:text-[var(--ink-muted)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--focus-ring)] sm:h-14 sm:min-h-0 sm:w-auto sm:px-5 sm:py-0 sm:text-base"
           placeholder="Search city, e.g. Lisbon"
           value={city}
           onChange={(event) => onCityChange(event.target.value)}
@@ -52,9 +56,9 @@ export function WeatherSearch({
         <button
           className="flex h-16 w-full cursor-pointer items-center justify-center rounded-2xl bg-[var(--cta)] px-6 font-semibold text-white transition hover:bg-[var(--cta-hover)] disabled:cursor-wait disabled:opacity-60 sm:h-14 sm:w-32 sm:shrink-0"
           type="submit"
-          disabled={isLoading}
+          disabled={isSearching}
         >
-          {isLoading ? "Reading..." : "Search"}
+          {isSearching ? "Reading..." : "Search"}
         </button>
       </form>
 
@@ -62,35 +66,39 @@ export function WeatherSearch({
         className="mt-3 inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-[var(--ink-muted)] transition hover:text-[var(--accent-dark)] disabled:cursor-wait disabled:opacity-60"
         type="button"
         onClick={onUseMyLocation}
-        disabled={isLoading}
+        disabled={isSearching || isLocating}
       >
         <MapPin size={16} />
-        Use my location
+        {isLocating ? "Finding you..." : "Use my location"}
       </button>
 
-      <div className="mt-5 min-h-8" aria-label="Recent searches">
+      <nav className="mt-5 min-h-8" aria-label="Recent searches">
         {recentSearches.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <ul className="flex list-none flex-wrap gap-2 p-0">
             {recentSearches.map((recentSearch) => (
-              <button
-                key={recentSearch.city}
-                className="cursor-pointer rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 text-sm text-[var(--ink-muted)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent-dark)] hover:shadow-[0_8px_20px_-12px_var(--shadow-color)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#d7654230]"
-                type="button"
-                onClick={() => onCityChange(recentSearch.city)}
-              >
-                {recentSearch.city}
-              </button>
+              <li key={recentSearch.city}>
+                <button
+                  className="cursor-pointer rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1.5 text-sm text-[var(--ink-muted)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent-dark)] hover:shadow-[0_8px_20px_-12px_var(--shadow-color)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--focus-ring)] disabled:cursor-wait disabled:opacity-60"
+                  type="button"
+                  onClick={() => onSelectRecent(recentSearch.city)}
+                  disabled={isSearching}
+                >
+                  {recentSearch.city}
+                  {recentSearch.country && (
+                    <span className="ml-1 opacity-60">
+                      {recentSearch.country}
+                    </span>
+                  )}
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
-      </div>
+      </nav>
 
-      <div className="mt-4 flex h-10 items-start" aria-live="polite">
+      <div className="mt-4 flex min-h-10 items-start" role="status">
         {error && (
-          <p
-            className="text-sm font-medium leading-5 text-[var(--accent-dark)]"
-            role="alert"
-          >
+          <p className="text-sm font-medium leading-5 text-[var(--accent-dark)]">
             {error}
           </p>
         )}

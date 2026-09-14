@@ -1,13 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import { parseRecentSearches, withRecentSearch } from "./recent-searches";
-import type { RecentSearch } from "./types";
+import type { RecentSearch } from "./model";
 
 describe("recent searches", () => {
   test("moves duplicates to the front and caps the list at five", () => {
-    const searches = ["Lisbon", "Berlin", "Paris", "Tokyo", "Lima", "Oslo"].reduce(
-      (list, city) => withRecentSearch(list, { city }),
-      [] as RecentSearch[],
-    );
+    const searches = [
+      "Lisbon",
+      "Berlin",
+      "Paris",
+      "Tokyo",
+      "Lima",
+      "Oslo",
+    ].reduce((list, city) => withRecentSearch(list, { city }), [] as RecentSearch[]);
     const withDuplicate = withRecentSearch(searches, { city: " berlin " });
 
     expect(withDuplicate.map((search) => search.city)).toEqual([
@@ -19,10 +23,10 @@ describe("recent searches", () => {
     ]);
   });
 
-  test("capitalizes only the first letter of a saved city", () => {
-    const searches = withRecentSearch([], { city: "  LISBON  " });
-
-    expect(searches[0]?.city).toBe("Lisbon");
+  test("stores a typed city under its display casing", () => {
+    expect(withRecentSearch([], { city: "  SAN FRANCISCO  " })[0]?.city).toBe(
+      "San Francisco",
+    );
   });
 
   test("round-trips through cookie serialization", () => {

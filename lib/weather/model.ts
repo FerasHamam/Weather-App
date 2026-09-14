@@ -1,5 +1,15 @@
+/**
+ * Application-owned weather types.
+ *
+ * These describe the domain only. Transport concerns (cache metadata, HTTP
+ * error envelopes) live in `lib/api/contract.ts`, and OpenWeatherMap's wire
+ * shapes live in `lib/weather/provider/dto.ts`, so provider details never
+ * reach the UI.
+ */
+
 export interface CurrentWeather {
   city: string;
+  /** Set only when the provider's locality differs from the resolved city. */
   neighborhood?: string;
   country: string;
   temperatureCelsius: number;
@@ -11,29 +21,20 @@ export interface CurrentWeather {
 }
 
 export interface DailyForecast {
+  /** Calendar date in UTC, `YYYY-MM-DD`, as the provider buckets it. */
   date: string;
-  temperatureCelsius: number;
   minTemperatureCelsius: number;
   maxTemperatureCelsius: number;
   description: string;
   iconCode: string;
 }
 
-export interface WeatherResponse {
+export interface Weather {
   current: CurrentWeather;
   forecast: DailyForecast[];
-  cached: boolean;
-  fetchedAt: string;
 }
 
 export interface RecentSearch {
   city: string;
   country?: string;
-}
-
-export interface ApiErrorResponse {
-  error: {
-    code: string;
-    message: string;
-  };
 }

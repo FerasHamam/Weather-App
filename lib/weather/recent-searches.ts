@@ -1,10 +1,7 @@
-import type { NextRequest, NextResponse } from "next/server";
-import type { RecentSearch } from "./types";
-import { formatCityName } from "./helpers";
+import type { RecentSearch } from "./model";
+import { cityKey, formatCityName } from "./city-name";
 
-const COOKIE_NAME = "weather_recent_searches";
-const MAX_RECENT_SEARCHES = 5;
-const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
+export const MAX_RECENT_SEARCHES = 5;
 
 function isRecentSearch(value: unknown): value is RecentSearch {
   if (typeof value !== "object" || value === null) {
@@ -18,14 +15,14 @@ function isRecentSearch(value: unknown): value is RecentSearch {
 }
 
 export function parseRecentSearches(
-  cookieValue: string | undefined,
+  serialized: string | undefined,
 ): RecentSearch[] {
-  if (!cookieValue) {
+  if (!serialized) {
     return [];
   }
 
   try {
-    const parsed: unknown = JSON.parse(cookieValue);
+    const parsed: unknown = JSON.parse(serialized);
     return Array.isArray(parsed)
       ? parsed.filter(isRecentSearch).slice(0, MAX_RECENT_SEARCHES)
       : [];
@@ -34,36 +31,21 @@ export function parseRecentSearches(
   }
 }
 
+export function serializeRecentSearches(searches: RecentSearch[]): string {
+  return JSON.stringify(searches);
+}
+
+/** Most recent first, case-insensitively de-duplicated, capped at five. */
 export function withRecentSearch(
   searches: RecentSearch[],
   search: RecentSearch,
 ): RecentSearch[] {
-  const normalizedCity = formatCityName(search.city);
-  const withoutDuplicate = searches.filter(
-    (item) => item.city.toLowerCase() !== normalizedCity.toLowerCase(),
-  );
+  const city = formatCityName(search.city);
+  const key = cityKey(city);
+  const withoutDuplicate = searches.filter((item) => cityKey(item.city) !== key);
 
-  return [{ ...search, city: normalizedCity }, ...withoutDuplicate].slice(
+  return [{ ...search, city }, ...withoutDuplicate].slice(
     0,
     MAX_RECENT_SEARCHES,
   );
-}
-
-export function readRecentSearches(request: NextRequest): RecentSearch[] {
-  return parseRecentSearches(request.cookies.get(COOKIE_NAME)?.value);
-}
-
-export function recordRecentSearch(
-  request: NextRequest,
-  response: NextResponse,
-  search: RecentSearch,
-): void {
-  const updated = withRecentSearch(readRecentSearches(request), search);
-  response.cookies.set(COOKIE_NAME, JSON.stringify(updated), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: COOKIE_MAX_AGE_SECONDS,
-    path: "/",
-  });
 }

@@ -1,44 +1,24 @@
-import type { WeatherResponse } from "@/lib/weather/types";
-import { ForecastDayCard, type ForecastCardData } from "./forecast-card";
+import type { DailyForecast } from "@/lib/weather/model";
+import { ForecastDayCard } from "./forecast-card";
 import { ForecastCardSkeleton } from "./skeleton";
-
-const sampleForecast: ForecastCardData[] = [
-  { key: "0", day: "Mon", dateLabel: "--", high: "--", low: "--" },
-  { key: "1", day: "Tue", dateLabel: "--", high: "--", low: "--" },
-  { key: "2", day: "Wed", dateLabel: "--", high: "--", low: "--" },
-  { key: "3", day: "Thu", dateLabel: "--", high: "--", low: "--" },
-  { key: "4", day: "Fri", dateLabel: "--", high: "--", low: "--" },
-];
+import {
+  PLACEHOLDER_FORECAST,
+  toCalendarDate,
+  toForecastCards,
+} from "./view-model";
 
 type ForecastSectionProps = {
-  weather: WeatherResponse | null;
+  forecast: DailyForecast[] | null;
   isLoading?: boolean;
 };
 
 export function ForecastSection({
-  weather,
+  forecast,
   isLoading = false,
 }: ForecastSectionProps) {
-  const todayLabel = new Date().toISOString().slice(0, 10);
-
-  const forecast: ForecastCardData[] = weather
-    ? weather.forecast.map((day) => {
-        const date = new Date(day.date);
-        return {
-          key: day.date,
-          day: date.toLocaleDateString(undefined, { weekday: "short" }),
-          dateLabel: date.toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-          }),
-          high: `${Math.round(day.maxTemperatureCelsius)}°`,
-          low: `${Math.round(day.minTemperatureCelsius)}°`,
-          iconCode: day.iconCode,
-          description: day.description,
-          isToday: day.date === todayLabel,
-        };
-      })
-    : sampleForecast;
+  const days = forecast
+    ? toForecastCards(forecast, toCalendarDate(new Date()))
+    : PLACEHOLDER_FORECAST;
 
   return (
     <section className="border-t border-[var(--line)] pt-7">
@@ -58,12 +38,10 @@ export function ForecastSection({
         aria-busy={isLoading}
       >
         {isLoading
-          ? Array.from({ length: 5 }).map((_, index) => (
-              <ForecastCardSkeleton key={index} />
+          ? PLACEHOLDER_FORECAST.map((placeholder) => (
+              <ForecastCardSkeleton key={placeholder.key} />
             ))
-          : forecast.map((forecastDay) => (
-              <ForecastDayCard key={forecastDay.key} day={forecastDay} />
-            ))}
+          : days.map((day) => <ForecastDayCard key={day.key} day={day} />)}
       </div>
     </section>
   );

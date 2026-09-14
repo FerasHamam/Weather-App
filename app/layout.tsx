@@ -34,10 +34,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <head>
+        {/* Runs during HTML parsing, so the stored theme is applied before
+            the browser paints anything. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-        {children}
-      </body>
+      </head>
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }

@@ -10,8 +10,6 @@ import {
   fetchWeatherByCoordinates,
   WeatherProviderError,
 } from "@/lib/weather/provider";
-import { getOrCreateSessionId } from "@/lib/weather/session";
-import type { WeatherResponse } from "@/lib/weather/types";
 
 export const dynamic = "force-dynamic";
 
@@ -39,27 +37,7 @@ function providerErrorResponse(error: WeatherProviderError): NextResponse {
   return errorResponse(502, error.code, error.message);
 }
 
-function finalizeWeather(
-  sessionId: string,
-  weather: WeatherResponse,
-  recordSearch: boolean,
-): NextResponse {
-  setCachedWeather(weather.current.city, weather);
-  if (recordSearch) {
-    recordRecentSearch(sessionId, {
-      city: weather.current.city,
-      country: weather.current.country,
-    });
-  }
-  return NextResponse.json(weather);
-}
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const sessionId = getOrCreateSessionId(
-    request.headers.get("x-weather-session-id") ??
-      request.cookies.get("weather_session_id")?.value,
-  );
-
   const latParam = request.nextUrl.searchParams.get("lat");
   const lonParam = request.nextUrl.searchParams.get("lon");
 
@@ -84,7 +62,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     try {
       const weather = await fetchWeatherByCoordinates(lat, lon);
-      return finalizeWeather(sessionId, weather, false);
+      setCachedWeather(weather.current.city, weather);
+      // Geolocation lookups never get added to recent searches.
+      return NextResponse.json(weather);
     } catch (error) {
       if (error instanceof WeatherProviderError) {
         return providerErrorResponse(error);
@@ -122,16 +102,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             : cachedLocationName),
       },
     };
-    recordRecentSearch(sessionId, {
+    const response = NextResponse.json(weatherWithSearchCity);
+    recordRecentSearch(request, response, {
       city: weatherWithSearchCity.current.city,
       country: weatherWithSearchCity.current.country,
     });
-    return NextResponse.json(weatherWithSearchCity);
+    return response;
   }
 
   try {
     const weather = await fetchWeather(city);
-    return finalizeWeather(sessionId, weather, true);
+    setCachedWeather(weather.current.city, weather);
+    const response = NextResponse.json(weather);
+    recordRecentSearch(request, response, {
+      city: weather.current.city,
+      country: weather.current.country,
+    });
+    return response;
   } catch (error) {
     if (error instanceof WeatherProviderError) {
       return providerErrorResponse(error);

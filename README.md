@@ -52,6 +52,10 @@ The API returns user-safe JSON errors with status codes for invalid input (`400`
 ## Improvements if I had more time
 
 1. Improve city alias handling so searches such as `NYC` and `New York City` resolve to the same canonical city and share the same cache entry. Currently, they may produce the same weather output but are cached separately.
-2. Spend more time detailing and refining the frontend to improve the overall user experience.
+2. Spend more time detailing and refining the frontend to improve the overall user experience. Also spend more time learning about Tailwind/Bootstrap, as it has been a while since I last used them seriously. (I have depended on AI to make the UI responsive and to eliminate any shifts that might affect the Lighthouse web vitals score.)
 3. I would use AI to summarize the forecast for each day because the API provides multiple weather descriptions across different timelines.
-4. Investigate a reliable way to integrate Bun SQLite with Next.js, since the initial implementation caused build and runtime failures(had not enough time to waste on figuring it out).
+4. Research the best way to visualize this data for expressiveness and effectiveness. ([reference](https://medium.com/vitrox-publication/evaluating-expressiveness-and-effectiveness-of-informative-charts-9f0455474bf1))
+
+**Note on point 4 and the bonus SQLite requirement**
+
+I attempted to integrate Bun's built-in SQLite (`bun:sqlite`) to make recent searches durable. It works locally — add `serverExternalPackages: ["bun:sqlite"]` to `next.config.ts` and run `bun --bun next dev/build/start` so the server process actually executes under the real Bun runtime, since Next's server otherwise runs under Node even when started via `bun run` — but it doesn't hold up for this app's deployment target. Vercel's filesystem is read-only outside of `/tmp`, `/tmp` is wiped between invocations and isn't shared across concurrent instances, and Vercel doesn't guarantee that repeat requests hit the same instance. Under those constraints, a local SQLite file can't provide real durability, so I reverted to the in-memory store rather than ship something that looks durable but silently isn't. In a production setting, I'd use a networked SQL database instead, which would also open up better options for insights and metrics.

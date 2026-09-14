@@ -1,20 +1,16 @@
 import { describe, expect, test } from "bun:test";
-import {
-  clearRecentSearches,
-  listRecentSearches,
-  recordRecentSearch,
-} from "./recent-searches";
+import { parseRecentSearches, withRecentSearch } from "./recent-searches";
+import type { RecentSearch } from "./types";
 
 describe("recent searches", () => {
   test("moves duplicates to the front and caps the list at five", () => {
-    const sessionId = "test-session";
-    clearRecentSearches(sessionId);
-    ["Lisbon", "Berlin", "Paris", "Tokyo", "Lima", "Oslo"].forEach((city) =>
-      recordRecentSearch(sessionId, { city }),
+    const searches = ["Lisbon", "Berlin", "Paris", "Tokyo", "Lima", "Oslo"].reduce(
+      (list, city) => withRecentSearch(list, { city }),
+      [] as RecentSearch[],
     );
-    recordRecentSearch(sessionId, { city: " berlin " });
+    const withDuplicate = withRecentSearch(searches, { city: " berlin " });
 
-    expect(listRecentSearches(sessionId).map((search) => search.city)).toEqual([
+    expect(withDuplicate.map((search) => search.city)).toEqual([
       "Berlin",
       "Oslo",
       "Lima",
@@ -24,10 +20,20 @@ describe("recent searches", () => {
   });
 
   test("capitalizes only the first letter of a saved city", () => {
-    const sessionId = "formatting-session";
-    clearRecentSearches(sessionId);
-    recordRecentSearch(sessionId, { city: "  LISBON  " });
+    const searches = withRecentSearch([], { city: "  LISBON  " });
 
-    expect(listRecentSearches(sessionId)[0]?.city).toBe("Lisbon");
+    expect(searches[0]?.city).toBe("Lisbon");
+  });
+
+  test("round-trips through cookie serialization", () => {
+    const searches = withRecentSearch([], { city: "Cairo", country: "EG" });
+
+    expect(parseRecentSearches(JSON.stringify(searches))).toEqual(searches);
+  });
+
+  test("ignores missing or malformed cookie values", () => {
+    expect(parseRecentSearches(undefined)).toEqual([]);
+    expect(parseRecentSearches("not json")).toEqual([]);
+    expect(parseRecentSearches('{"not":"an array"}')).toEqual([]);
   });
 });

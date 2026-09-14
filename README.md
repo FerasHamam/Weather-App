@@ -17,10 +17,10 @@ Prerequisites: Bun and an OpenWeatherMap API key.
 
 ```bash
 bun install
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Set `OPENWEATHER_API_KEY` in `.env.local`, then run:
+Set `OPENWEATHER_API_KEY` in `.env`. `OPENWEATHER_API_BASE_URL` is also present and defaults to `https://api.openweathermap.org`; leave it as-is unless you need to point at a different endpoint. Then run:
 
 ```bash
 bun run dev
@@ -39,23 +39,23 @@ bun run build
 
 ## Architecture
 
-The browser calls the Next.js Route Handler at `GET /api/weather?city=...`. The handler validates input, checks a normalized city key in a ten-minute in-memory cache, calls the server-only OpenWeatherMap adapter on a miss, maps provider data into application-owned types, and records successful searches. Recent searches are available from `GET /api/recent-searches` and are limited to the five most recent unique cities.
+`GET /api/weather` takes either `?city=...` or `?lat=...&lon=...` (the "use my location" flow). A city search geocodes to coordinates, checks a ten-minute in-memory cache keyed by normalized city, and on a miss calls the server-only OpenWeatherMap adapter. A coordinates search reverse-geocodes to a city name instead, and is deliberately not cached or saved as a recent search, since it is tied to one exact position rather than a searchable city. Provider DTOs are mapped into application-owned types before the response, so upstream shapes never reach the client.
 
-Provider DTOs are kept separate from UI types so OpenWeatherMap response details do not leak into the client. The dashboard is a client component because it owns form input and request state; the page and layout remain server-rendered composition boundaries. API keys are read only in server modules.
+Recent searches (five most recent unique cities) have no separate endpoint: they travel as a field on the `/api/weather` response and are written back as an anonymous `HttpOnly` cookie, and `app/page.tsx` reads that cookie server-side to seed the first paint. (Please read my note below about this point).
 
-The cache and recent-search store are intentionally lightweight for the assessment and require no external database. Weather caching is shared by the server process because weather data is public. Recent searches are scoped by an anonymous `HttpOnly` session cookie, so browser sessions do not see one another's search history. Both stores are local to a running process, so separate serverless instances may not share them and they are not durable across restarts. A production version would use a shared cache and durable store such as Redis or a managed database.
+I chose a setup that actually works on Vercel over a more advanced one that wouldn't: Vercel runs the app as separate serverless instances, and it [only reuses a warm instance on a best-effort basis](https://vercel.com/blog/evolving-vercel-functions) — there's no guarantee two requests, even from the same user, land on the same one, and an idle function gets [archived and cold-started](https://vercel.com/docs/functions/runtimes) on its next invocation. So anything stored in a single instance's memory (a cache, a session map, a SQLite file in `/tmp`) can disappear or get out of sync between requests, not because it's wiped every time, but because persistence is never guaranteed. That's why the weather cache is a simple in-memory `Map`, and why recent searches are stored in the cookie itself instead of on the server, so they work reliably no matter which instance handles the request. I originally gave each anonymous user a session UUID and used it as a key into a server side store of their recent searches, but that ran into the same problem: the store would need to live in memory on one instance, so it dropped or diverged depending on which instance served the request. Storing the searches directly in the cookie sidesteps that entirely. In a real production setup, I'd replace the cache with something shared across instances, like Redis.
+
+**Note on point 4 and the bonus SQLite requirement**
+
+I tried using Bun's built-in SQLite (`bun:sqlite`) to make recent searches durable. it works fine locally after adding `serverExternalPackages: ["bun:sqlite"]` to `next.config.ts`. But it doesn't hold up on Vercel: the filesystem there is read-only outside of `/tmp`, `/tmp` isn't guaranteed to persist between invocations or be shared across instances, and there's no guarantee two requests even land on the same instance. So a local SQLite file can't actually be durable in that environment. In production, I'd use a proper networked database instead, which would also make it easier to build insights and metrics later.
 
 ## Error behavior
 
-The API returns user-safe JSON errors with status codes for invalid input (`400`), unknown cities (`404`), provider rate limits (`429`), network failures (`503`), and upstream failures (`502`). The UI presents these errors without exposing provider internals.
+Input is validated before any provider call: `city` must normalize to 2–100 characters, and `lat`/`lon` must be finite numbers within `[-90, 90]`/`[-180, 180]`. The API returns user-safe JSON errors without exposing provider internals: `400` for invalid input, `404` for an unknown city, `429` for provider rate limiting, `502` for an unexpected upstream response, `503` for a network/timeout failure, and `500` for a missing API key or anything unanticipated. The UI surfaces these messages as-is.
 
 ## Improvements if I had more time
 
 1. Improve city alias handling so searches such as `NYC` and `New York City` resolve to the same canonical city and share the same cache entry. Currently, they may produce the same weather output but are cached separately.
 2. Spend more time detailing and refining the frontend to improve the overall user experience. Also spend more time learning about Tailwind/Bootstrap, as it has been a while since I last used them seriously. (I have depended on AI to make the UI responsive and to eliminate any shifts that might affect the Lighthouse web vitals score.)
-3. I would use AI to summarize the forecast for each day because the API provides multiple weather descriptions across different timelines.
+3. I would use AI to summarize the forecast for each day because the API provides multiple weather descriptions across different timelines. Currently I am using the midday to represent the whole day.
 4. Research the best way to visualize this data for expressiveness and effectiveness. ([reference](https://medium.com/vitrox-publication/evaluating-expressiveness-and-effectiveness-of-informative-charts-9f0455474bf1))
-
-**Note on point 4 and the bonus SQLite requirement**
-
-I attempted to integrate Bun's built-in SQLite (`bun:sqlite`) to make recent searches durable. It works locally — add `serverExternalPackages: ["bun:sqlite"]` to `next.config.ts` and run `bun --bun next dev/build/start` so the server process actually executes under the real Bun runtime, since Next's server otherwise runs under Node even when started via `bun run` — but it doesn't hold up for this app's deployment target. Vercel's filesystem is read-only outside of `/tmp`, `/tmp` is wiped between invocations and isn't shared across concurrent instances, and Vercel doesn't guarantee that repeat requests hit the same instance. Under those constraints, a local SQLite file can't provide real durability, so I reverted to the in-memory store rather than ship something that looks durable but silently isn't. In a production setting, I'd use a networked SQL database instead, which would also open up better options for insights and metrics.

@@ -62,8 +62,16 @@ export function WeatherSearch({
         </button>
       </form>
 
+      <div className="my-0 flex min-h-5 items-start" role="status">
+        {error && (
+          <p className="text-sm font-medium leading-5 text-[var(--accent-dark)]">
+            {error}
+          </p>
+        )}
+      </div>
+
       <button
-        className="mt-3 inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-[var(--ink-muted)] transition hover:text-[var(--accent-dark)] disabled:cursor-wait disabled:opacity-60"
+        className="mt-0 inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-[var(--ink-muted)] transition hover:text-[var(--accent-dark)] disabled:cursor-wait disabled:opacity-60"
         type="button"
         onClick={onUseMyLocation}
         disabled={isSearching || isLocating}
@@ -72,7 +80,10 @@ export function WeatherSearch({
         {isLocating ? "Finding you..." : "Use my location"}
       </button>
 
-      <nav className="mt-5 min-h-8" aria-label="Recent searches">
+      <nav
+        className="mt-0 h-[160px] overflow-hidden p-2"
+        aria-label="Recent searches"
+      >
         {recentSearches.length > 0 && (
           <ul className="flex list-none flex-wrap gap-2 p-0">
             {recentSearches.map((recentSearch) => (
@@ -95,14 +106,6 @@ export function WeatherSearch({
           </ul>
         )}
       </nav>
-
-      <div className="mt-4 flex min-h-10 items-start" role="status">
-        {error && (
-          <p className="text-sm font-medium leading-5 text-[var(--accent-dark)]">
-            {error}
-          </p>
-        )}
-      </div>
     </div>
   );
 }

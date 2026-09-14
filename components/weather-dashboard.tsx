@@ -34,8 +34,9 @@ export function WeatherDashboard({
 }: WeatherDashboardProps) {
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState<WeatherApiResponse | null>(null);
-  const [recentSearches, setRecentSearches] =
-    useState<RecentSearch[]>(initialRecentSearches);
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(
+    initialRecentSearches,
+  );
   const [isSearching, setIsSearching] = useState(false);
   // Geolocation is attempted once on mount, so the first paint should show the
   // skeleton rather than the empty state. Tracked apart from `isSearching` so
@@ -162,7 +163,7 @@ export function WeatherDashboard({
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
       {header}
 
-      <section className="grid flex-1 gap-8 py-10 lg:grid-cols-[1.1fr_1.9fr] lg:items-start lg:py-16">
+      <section className="grid flex-1 gap-8 pt-10 pb-0 lg:grid-cols-[1.1fr_1.9fr] lg:items-start lg:py-0">
         <WeatherSearch
           city={city}
           error={error}

@@ -26,7 +26,7 @@ export function CurrentWeatherLoaded({
           >
             {current.neighborhood ?? " "}
           </p>
-          <p className="mt-1 capitalize text-[var(--ink-muted)]">
+          <p className="mt-1 h-6 truncate capitalize leading-6 text-[var(--ink-muted)]">
             {current.description}
           </p>
         </div>

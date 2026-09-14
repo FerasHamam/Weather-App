@@ -1,5 +1,5 @@
 import type { CurrentWeather, DailyForecast, WeatherResponse } from "./types";
-import { formatCityName, normalizeCity } from "./helpers";
+import { normalizeCity } from "./helpers";
 
 const API_BASE_URL =
   process.env.OPENWEATHER_API_BASE_URL ?? "https://api.openweathermap.org";
@@ -200,6 +200,28 @@ function mapForecast(payload: ForecastPayload): DailyForecast[] {
   return [...byDate.values()].slice(0, 5);
 }
 
+async function reverseGeocode(
+  lat: number,
+  lon: number,
+  apiKey: string,
+): Promise<Coordinates | null> {
+  const reverseUrl = new URL(`${API_BASE_URL}/geo/1.0/reverse`);
+  reverseUrl.searchParams.set("lat", String(lat));
+  reverseUrl.searchParams.set("lon", String(lon));
+  reverseUrl.searchParams.set("limit", "1");
+  reverseUrl.searchParams.set("appid", apiKey);
+
+  try {
+    const payload = await fetchProvider(reverseUrl);
+    if (Array.isArray(payload) && isCoordinates(payload[0])) {
+      return payload[0];
+    }
+  } catch {
+    // Best-effort: fall back to the weather payload's locality name below.
+  }
+  return null;
+}
+
 async function fetchCurrentAndForecast(
   lat: number,
   lon: number,
@@ -253,19 +275,28 @@ export async function fetchWeather(city: string): Promise<WeatherResponse> {
   }
 
   const coordinates = geocodePayload[0];
-  const { currentPayload, forecastPayload } = await fetchCurrentAndForecast(
-    coordinates.lat,
-    coordinates.lon,
-    apiKey,
+  const [{ currentPayload, forecastPayload }, reverseGeocoded] =
+    await Promise.all([
+      fetchCurrentAndForecast(coordinates.lat, coordinates.lon, apiKey),
+      reverseGeocode(coordinates.lat, coordinates.lon, apiKey),
+    ]);
+
+  const locality = currentPayload.name;
+  const cityName = normalizeCity(
+    reverseGeocoded?.name ?? coordinates.name ?? city,
   );
 
   const currentWeather: CurrentWeather = {
-    city: formatCityName(city),
+    city: cityName,
     neighborhood:
-      currentPayload.name.toLowerCase() === city.toLowerCase()
-        ? undefined
-        : currentPayload.name,
-    country: currentPayload.sys?.country ?? coordinates.country ?? "",
+      locality && locality.toLowerCase() !== cityName.toLowerCase()
+        ? locality
+        : undefined,
+    country:
+      currentPayload.sys?.country ??
+      reverseGeocoded?.country ??
+      coordinates.country ??
+      "",
     temperatureCelsius: currentPayload.main.temp,
     feelsLikeCelsius: currentPayload.main.feels_like,
     humidityPercent: currentPayload.main.humidity,
@@ -287,15 +318,22 @@ export async function fetchWeatherByCoordinates(
   lon: number,
 ): Promise<WeatherResponse> {
   const apiKey = getApiKey();
-  const { currentPayload, forecastPayload } = await fetchCurrentAndForecast(
-    lat,
-    lon,
-    apiKey,
-  );
+  const [{ currentPayload, forecastPayload }, reverseGeocoded] =
+    await Promise.all([
+      fetchCurrentAndForecast(lat, lon, apiKey),
+      reverseGeocode(lat, lon, apiKey),
+    ]);
+
+  const locality = currentPayload.name;
+  const cityName = normalizeCity(reverseGeocoded?.name ?? locality);
 
   const currentWeather: CurrentWeather = {
-    city: normalizeCity(currentPayload.name),
-    country: currentPayload.sys?.country ?? "",
+    city: cityName,
+    neighborhood:
+      locality && locality.toLowerCase() !== cityName.toLowerCase()
+        ? locality
+        : undefined,
+    country: currentPayload.sys?.country ?? reverseGeocoded?.country ?? "",
     temperatureCelsius: currentPayload.main.temp,
     feelsLikeCelsius: currentPayload.main.feels_like,
     humidityPercent: currentPayload.main.humidity,

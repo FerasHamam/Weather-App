@@ -102,7 +102,11 @@ export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
         }
         void loadWeather(
           `/api/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}`,
-        );
+        ).then((success) => {
+          if (success) {
+            setCity("");
+          }
+        });
       },
       () => {
         if (isStale()) {
@@ -134,7 +138,7 @@ export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
       {header}
 
-      <section className="grid flex-1 gap-8 py-10 lg:grid-cols-[1.1fr_1.9fr] lg:items-center lg:py-16">
+      <section className="grid flex-1 gap-8 py-10 lg:grid-cols-[1.1fr_1.9fr] lg:items-start lg:py-16">
         <WeatherSearch
           city={city}
           error={error}

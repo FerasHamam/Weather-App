@@ -16,8 +16,11 @@ export function CurrentWeatherLoaded({ weather }: CurrentWeatherLoadedProps) {
           <h2 className="mt-2 truncate text-3xl font-semibold">
             {weather.current.city}
           </h2>
-          <p className="mt-1 truncate text-sm text-[var(--ink-muted)]">
-            {weather.current.neighborhood ?? " "}
+          <p
+            className="mt-1 h-5 truncate text-sm leading-5 text-[var(--ink-muted)]"
+            aria-hidden={!weather.current.neighborhood}
+          >
+            {weather.current.neighborhood ?? " "}
           </p>
           <p className="mt-1 capitalize text-[var(--ink-muted)]">
             {weather.current.description}

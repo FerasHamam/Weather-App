@@ -42,12 +42,15 @@ function providerErrorResponse(error: WeatherProviderError): NextResponse {
 function finalizeWeather(
   sessionId: string,
   weather: WeatherResponse,
+  recordSearch: boolean,
 ): NextResponse {
   setCachedWeather(weather.current.city, weather);
-  recordRecentSearch(sessionId, {
-    city: weather.current.city,
-    country: weather.current.country,
-  });
+  if (recordSearch) {
+    recordRecentSearch(sessionId, {
+      city: weather.current.city,
+      country: weather.current.country,
+    });
+  }
   return NextResponse.json(weather);
 }
 
@@ -81,7 +84,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     try {
       const weather = await fetchWeatherByCoordinates(lat, lon);
-      return finalizeWeather(sessionId, weather);
+      return finalizeWeather(sessionId, weather, false);
     } catch (error) {
       if (error instanceof WeatherProviderError) {
         return providerErrorResponse(error);
@@ -128,7 +131,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     const weather = await fetchWeather(city);
-    return finalizeWeather(sessionId, weather);
+    return finalizeWeather(sessionId, weather, true);
   } catch (error) {
     if (error instanceof WeatherProviderError) {
       return providerErrorResponse(error);

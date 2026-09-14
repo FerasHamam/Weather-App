@@ -68,10 +68,7 @@ export function WeatherSearch({
         Use my location
       </button>
 
-      <div
-        className="mt-5 h-[4.5rem] overflow-hidden"
-        aria-label="Recent searches"
-      >
+      <div className="mt-5 min-h-8" aria-label="Recent searches">
         {recentSearches.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {recentSearches.map((recentSearch) => (

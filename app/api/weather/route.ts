@@ -134,9 +134,7 @@ async function getWeatherByCity(
     const weather = await fetchWeather(city);
     const fetchedAt = new Date().toISOString();
 
-    // Stored under the search term as well as the resolved name, so "NYC" and
-    // "New York" share one entry instead of each paying for its own lookup.
-    setCachedWeather([city, weather.current.city], { weather, fetchedAt });
+    setCachedWeather(city, { weather, fetchedAt });
 
     return respondWithWeather(request, weather, fetchedAt, false);
   } catch (error) {

@@ -11,7 +11,6 @@ const MAX_CACHE_ENTRIES = 500;
 
 export type CachedWeather = {
   weather: Weather;
-  /** When the upstream call happened, not when it was cached. */
   fetchedAt: string;
 };
 
@@ -54,27 +53,23 @@ export function getCachedWeather(
 }
 
 /**
- * Stores one result under several keys.
- *
- * A search for "NYC" resolves to "New York", and both must hit this entry —
- * otherwise every alias pays for a fresh set of upstream calls forever.
+ * Stores a result under the city as the caller identifies it.
  */
 export function setCachedWeather(
-  cities: string[],
+  city: string,
   value: CachedWeather,
   now = Date.now(),
 ): void {
-  if (cache.size >= MAX_CACHE_ENTRIES) {
+  const key = cityKey(city);
+  if (!key) {
+    return;
+  }
+
+  if (!cache.has(key) && cache.size >= MAX_CACHE_ENTRIES) {
     evict(now);
   }
 
-  const entry: CacheEntry = { ...value, expiresAt: now + WEATHER_CACHE_TTL_MS };
-  for (const city of cities) {
-    const key = cityKey(city);
-    if (key) {
-      cache.set(key, entry);
-    }
-  }
+  cache.set(key, { ...value, expiresAt: now + WEATHER_CACHE_TTL_MS });
 }
 
 export function clearWeatherCache(): void {

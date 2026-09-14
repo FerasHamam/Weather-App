@@ -39,7 +39,7 @@ bun run build
 
 ## Architecture
 
-`GET /api/weather` takes either `?city=...` or `?lat=...&lon=...` (the "use my location" flow). A city search geocodes to coordinates, checks a ten-minute in-memory cache keyed by normalized city, and on a miss calls the server-only OpenWeatherMap adapter. A coordinates search reverse-geocodes to a city name instead, and is deliberately not cached or saved as a recent search, since it is tied to one exact position rather than a searchable city. Provider DTOs are mapped into application-owned types before the response, so upstream shapes never reach the client.
+`GET /api/weather` takes either `?city=...` or `?lat=...&lon=...` (the "use my location" flow). A city search first checks a ten-minute in-memory cache keyed by the normalized city name; only on a miss does it call the server-only OpenWeatherMap adapter, which geocodes the city to coordinates and then fetches current weather and the forecast. A coordinates search reverse-geocodes to a city name instead, and is deliberately not cached or saved as a recent search, since it is tied to one exact position rather than a searchable city. Provider DTOs are mapped into application-owned types before the response, so upstream shapes never reach the client.
 
 Recent searches (five most recent unique cities) have no separate endpoint: they travel as a field on the `/api/weather` response and are written back as an anonymous `HttpOnly` cookie, and `app/page.tsx` reads that cookie server-side to seed the first paint. (Please read my note below about this point).
 

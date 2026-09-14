@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { MapPin } from "@/components/icons";
 import type { RecentSearch } from "@/lib/weather/model";
 
@@ -9,7 +9,7 @@ type WeatherSearchProps = {
   isLocating: boolean;
   recentSearches: RecentSearch[];
   onCityChange: (city: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSelectRecent: (city: string) => void;
   onUseMyLocation: () => void;
 };

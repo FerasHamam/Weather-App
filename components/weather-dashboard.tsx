@@ -5,8 +5,8 @@ import {
   useEffect,
   useRef,
   useState,
-  type FormEvent,
   type ReactNode,
+  type SubmitEvent,
 } from "react";
 import { CurrentWeatherCard } from "@/components/current-weather-card";
 import { ForecastSection } from "@/components/forecast-section";
@@ -152,7 +152,7 @@ export function WeatherDashboard({
     };
   }, [requestLocation]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     void searchCity(city);
   }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { cityKey, formatCityName, normalizeCity } from "./city-name";
+import { toCityKey, formatCityName, normalizeCity } from "./city-name";
 
 describe("formatCityName", () => {
   test("title-cases every word of a name the user typed", () => {
@@ -29,8 +29,8 @@ describe("normalizeCity", () => {
   });
 });
 
-describe("cityKey", () => {
+describe("toCityKey", () => {
   test("ignores case and spacing so aliases collide", () => {
-    expect(cityKey("  San   Francisco ")).toBe(cityKey("san francisco"));
+    expect(toCityKey("  San   Francisco ")).toBe(toCityKey("san francisco"));
   });
 });

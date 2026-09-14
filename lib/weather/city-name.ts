@@ -23,6 +23,6 @@ export function formatCityName(city: string): string {
 }
 
 /** Case- and whitespace-insensitive key used by the cache and de-duplication. */
-export function cityKey(city: string): string {
+export function toCityKey(city: string): string {
   return normalizeCity(city).toLowerCase();
 }

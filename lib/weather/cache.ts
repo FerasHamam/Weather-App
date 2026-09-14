@@ -1,5 +1,5 @@
 import type { Weather } from "./model";
-import { cityKey } from "./city-name";
+import { toCityKey } from "./city-name";
 
 export const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
 
@@ -37,7 +37,7 @@ export function getCachedWeather(
   city: string,
   now = Date.now(),
 ): CachedWeather | null {
-  const key = cityKey(city);
+  const key = toCityKey(city);
   const entry = cache.get(key);
 
   if (!entry) {
@@ -60,7 +60,7 @@ export function setCachedWeather(
   value: CachedWeather,
   now = Date.now(),
 ): void {
-  const key = cityKey(city);
+  const key = toCityKey(city);
   if (!key) {
     return;
   }

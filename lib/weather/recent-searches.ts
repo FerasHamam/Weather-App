@@ -1,5 +1,5 @@
 import type { RecentSearch } from "./model";
-import { cityKey, formatCityName } from "./city-name";
+import { formatCityName, toCityKey } from "./city-name";
 
 export const MAX_RECENT_SEARCHES = 5;
 
@@ -41,8 +41,8 @@ export function withRecentSearch(
   search: RecentSearch,
 ): RecentSearch[] {
   const city = formatCityName(search.city);
-  const key = cityKey(city);
-  const withoutDuplicate = searches.filter((item) => cityKey(item.city) !== key);
+  const key = toCityKey(city);
+  const withoutDuplicate = searches.filter((item) => toCityKey(item.city) !== key);
 
   return [{ ...search, city }, ...withoutDuplicate].slice(
     0,

@@ -1,9 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { CurrentWeatherCard } from "@/components/current-weather-card";
-import { DashboardFooter } from "@/components/dashboard-footer";
-import { DashboardHeader } from "@/components/dashboard-header";
 import { ForecastSection } from "@/components/forecast-section";
 import { WeatherSearch } from "@/components/weather-search";
 import type {
@@ -12,7 +10,12 @@ import type {
   WeatherResponse,
 } from "@/lib/weather/types";
 
-export function WeatherDashboard() {
+type WeatherDashboardProps = {
+  header: ReactNode;
+  footer: ReactNode;
+};
+
+export function WeatherDashboard({ header, footer }: WeatherDashboardProps) {
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState<WeatherResponse | null>(null);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
@@ -74,7 +77,7 @@ export function WeatherDashboard() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
-      <DashboardHeader />
+      {header}
 
       <section className="grid flex-1 gap-8 py-10 lg:grid-cols-[1.1fr_1.9fr] lg:items-center lg:py-16">
         <WeatherSearch
@@ -89,7 +92,7 @@ export function WeatherDashboard() {
       </section>
 
       <ForecastSection weather={weather} />
-      <DashboardFooter />
+      {footer}
     </main>
   );
 }

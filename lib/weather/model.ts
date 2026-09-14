@@ -21,7 +21,6 @@ export interface CurrentWeather {
 }
 
 export interface DailyForecast {
-  /** Calendar date in UTC, `YYYY-MM-DD`, as the provider buckets it. */
   date: string;
   minTemperatureCelsius: number;
   maxTemperatureCelsius: number;

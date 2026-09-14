@@ -131,7 +131,6 @@ async function fetchCurrentAndForecast(
   return { current: currentPayload, forecast };
 }
 
-/** Best effort: the caller falls back to a name it already holds. */
 async function reverseGeocode(
   lat: number,
   lon: number,
@@ -145,9 +144,23 @@ async function reverseGeocode(
       return payload[0];
     }
   } catch {
-    // Naming is a nicety; never fail the request over it.
+    // Reverse geocoding is a convenience for the user.
+    // I handled it by falling back to the current.name
   }
   return null;
+}
+
+async function geocodeCity(city: string, apiKey: string): Promise<Coordinates> {
+  const payload = await fetchProvider(
+    providerUrl("/geo/1.0/direct", { q: city, limit: 1, appid: apiKey }),
+  );
+
+  // OpenWeatherMap returns an array by design; an empty one means no match.
+  if (!Array.isArray(payload) || !isCoordinates(payload[0])) {
+    throw new WeatherError("invalid-city", "We could not find that city.");
+  }
+
+  return payload[0];
 }
 
 function toWeather(
@@ -163,17 +176,8 @@ function toWeather(
 
 export async function fetchWeather(city: string): Promise<Weather> {
   const apiKey = getApiKey();
+  const coordinates = await geocodeCity(city, apiKey);
 
-  const geocodePayload = await fetchProvider(
-    providerUrl("/geo/1.0/direct", { q: city, limit: 1, appid: apiKey }),
-  );
-
-  // OpenWeatherMap returns an array by design; an empty one means no match.
-  if (!Array.isArray(geocodePayload) || !isCoordinates(geocodePayload[0])) {
-    throw new WeatherError("invalid-city", "We could not find that city.");
-  }
-
-  const coordinates = geocodePayload[0];
   const { current, forecast } = await fetchCurrentAndForecast(
     coordinates.lat,
     coordinates.lon,
@@ -198,5 +202,9 @@ export async function fetchWeatherByCoordinates(
     reverseGeocode(lat, lon, apiKey),
   ]);
 
-  return toWeather(current, forecast, reverseGeocoded ?? { name: current.name });
+  return toWeather(
+    current,
+    forecast,
+    reverseGeocoded ?? { name: current.name },
+  );
 }

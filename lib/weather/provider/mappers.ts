@@ -22,9 +22,8 @@ export function toDailyForecasts(entries: ForecastEntry[]): DailyForecast[] {
 
   for (const entry of entries) {
     const date = entry.dt_txt.slice(0, 10);
-    const middayDistance = Math.abs(
-      Number(entry.dt_txt.slice(11, 13)) - MIDDAY_HOUR,
-    );
+    const hour = entry.dt_txt.slice(11, 13);
+    const middayDistance = Math.abs(Number(hour) - MIDDAY_HOUR);
     const existing = byDate.get(date);
 
     if (!existing) {
